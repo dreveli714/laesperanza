@@ -1,0 +1,20 @@
+{
+  "name": "Finca La Esperanza",
+  "short_name": "La Esperanza",
+  "description": "Registro de actividades, ventas y gastos de la finca. Funciona sin conexión.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F7F3E9",
+  "theme_color": "#1F5B37",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
