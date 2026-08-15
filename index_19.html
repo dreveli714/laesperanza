@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F5B37">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Finca La Esperanza">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>Finca La Esperanza</title>
+<style>
+  :root{
+    --bg:#F7F3E9; --surface:#FFFFFF;
+    --green:#1F5B37; --green-dark:#16452A; --green-soft:#E7EFE6;
+    --gold:#D99A1C; --gold-dark:#B67E12; --gold-soft:#FBF0D8;
+    --cocoa:#2A211A; --muted:#6E6353;
+    --rust:#A5432A; --rust-soft:#F6E5DF;
+    --line:#E3DAC8;
+    --radius:16px; --radius-sm:11px;
+    --tap:56px;
+    --shadow:0 2px 10px rgba(42,33,26,.06);
+    font-size:17px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--cocoa);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    line-height:1.45; -webkit-font-smoothing:antialiased;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+
+  /* Header */
+  header{
+    background:var(--green); color:#fff;
+    padding:calc(env(safe-area-inset-top) + 12px) 16px 12px;
+    display:flex;align-items:center;gap:11px;position:sticky;top:0;z-index:20;
+  }
+  header .logo{flex:0 0 auto;width:34px;height:34px;display:block;}
+  header h1{font-size:1.15rem;font-weight:700;margin:0;letter-spacing:.2px;flex:1;line-height:1.15;}
+  header .gear{background:rgba(255,255,255,.14);border:none;color:#fff;width:40px;height:40px;border-radius:11px;font-size:1.25rem;cursor:pointer;flex:0 0 auto;}
+  header .gear:active{background:rgba(255,255,255,.26);}
+
+  /* Sync pill */
+  .syncbar{background:var(--green-dark);color:#fff;font-size:.85rem;padding:7px 16px;display:flex;align-items:center;gap:8px;justify-content:center;}
+  .syncbar .dot{width:9px;height:9px;border-radius:50%;background:#8FD6A6;flex:0 0 auto;}
+  .syncbar.pend .dot{background:var(--gold);}
+  .syncbar.off .dot{background:#E0A0A0;}
+  .syncbar button{margin-left:auto;background:rgba(255,255,255,.16);border:none;color:#fff;border-radius:8px;padding:4px 10px;font-size:.8rem;cursor:pointer;}
+
+  main{flex:1;padding:18px 16px 40px;}
+  .screen{display:none;animation:fade .18s ease;}
+  .screen.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+  /* Home */
+  .home-btn{
+    width:100%;min-height:86px;border:none;border-radius:var(--radius);
+    display:flex;align-items:center;gap:16px;padding:0 20px;margin-bottom:14px;
+    font-size:1.4rem;font-weight:700;cursor:pointer;color:#fff;text-align:left;
+    box-shadow:var(--shadow);
+  }
+  .home-btn .ico{font-size:2rem;flex:0 0 auto;}
+  .home-btn .sub{display:block;font-size:.85rem;font-weight:500;opacity:.9;margin-top:2px;}
+  .home-btn.trab{background:var(--green);}
+  .home-btn.venta{background:var(--gold);color:#3a2a08;}
+  .home-btn.gasto{background:var(--rust);}
+  .home-btn:active{transform:scale(.985);}
+  .home-secondary{display:flex;gap:12px;margin-top:6px;}
+  .home-secondary button{
+    flex:1;min-height:var(--tap);border-radius:var(--radius-sm);border:1.5px solid var(--line);
+    background:var(--surface);color:var(--cocoa);font-size:1rem;font-weight:600;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:7px;
+  }
+  .home-secondary button:active{background:var(--green-soft);}
+
+  /* Forms */
+  .backrow{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+  .back{background:none;border:none;color:var(--green);font-size:1rem;font-weight:600;cursor:pointer;padding:6px 2px;display:flex;align-items:center;gap:5px;}
+  .screen h2{font-size:1.35rem;margin:0;font-weight:700;}
+  .field{margin-bottom:18px;}
+  .field > label{display:block;font-size:.9rem;font-weight:600;color:var(--muted);margin-bottom:8px;}
+  input[type=text],input[type=number],input[type=date],textarea,select{
+    width:100%;min-height:var(--tap);border:1.5px solid var(--line);border-radius:var(--radius-sm);
+    background:var(--surface);color:var(--cocoa);font-size:1.15rem;padding:0 14px;font-family:inherit;
+  }
+  textarea{padding:12px 14px;min-height:74px;line-height:1.4;resize:vertical;}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft);}
+
+  /* Chips (selección rápida) */
+  .chips{display:flex;flex-wrap:wrap;gap:9px;}
+  .chip{
+    border:1.5px solid var(--line);background:var(--surface);color:var(--cocoa);
+    border-radius:999px;padding:11px 16px;font-size:1.02rem;font-weight:600;cursor:pointer;min-height:46px;
+  }
+  .chip:active{transform:scale(.96);}
+  .chip.sel{background:var(--green);color:#fff;border-color:var(--green);}
+  .chip.add{border-style:dashed;color:var(--green);font-weight:700;}
+  .chip.gold.sel{background:var(--gold);color:#3a2a08;border-color:var(--gold);}
+
+  /* Stepper */
+  .stepper{display:flex;align-items:stretch;gap:10px;}
+  .stepper button{width:56px;min-height:var(--tap);border:1.5px solid var(--line);background:var(--surface);border-radius:var(--radius-sm);font-size:1.6rem;font-weight:700;color:var(--green);cursor:pointer;line-height:1;}
+  .stepper button:active{background:var(--green-soft);}
+  .stepper input{text-align:center;font-weight:700;}
+
+  .row2{display:flex;gap:12px;}
+  .row2 .field{flex:1;}
+
+  .total-box{background:var(--gold-soft);border:1.5px solid #EBD199;border-radius:var(--radius-sm);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+  .total-box .lbl{font-weight:600;color:var(--gold-dark);}
+  .total-box .val{font-size:1.5rem;font-weight:800;color:var(--cocoa);}
+
+  /* Foto */
+  .foto-btn{width:100%;min-height:var(--tap);border:1.5px dashed var(--line);background:var(--surface);border-radius:var(--radius-sm);color:var(--green);font-weight:600;font-size:1.02rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;}
+  .foto-btn:active{background:var(--green-soft);}
+  .foto-preview{margin-top:12px;position:relative;display:none;}
+  .foto-preview img{width:100%;border-radius:var(--radius-sm);border:1.5px solid var(--line);display:block;}
+  .foto-preview .x{position:absolute;top:8px;right:8px;background:rgba(42,33,26,.8);color:#fff;border:none;width:34px;height:34px;border-radius:50%;font-size:1.1rem;cursor:pointer;}
+  .foto-note{font-size:.82rem;color:var(--muted);margin-top:7px;}
+
+  .save{width:100%;min-height:60px;background:var(--green);color:#fff;border:none;border-radius:var(--radius);font-size:1.2rem;font-weight:700;cursor:pointer;margin-top:6px;box-shadow:var(--shadow);}
+  .save:active{background:var(--green-dark);}
+  .save.gold{background:var(--gold);color:#3a2a08;}
+  .save.gold:active{background:var(--gold-dark);}
+  .save.rust{background:var(--rust);}
+
+  /* Análisis */
+  .seg{display:flex;background:var(--green-soft);border-radius:11px;padding:4px;margin-bottom:18px;}
+  .seg button{flex:1;min-height:44px;border:none;background:none;font-weight:600;font-size:1rem;color:var(--green-dark);border-radius:8px;cursor:pointer;}
+  .seg button.sel{background:var(--surface);color:var(--cocoa);box-shadow:var(--shadow);}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--shadow);}
+  .card h3{margin:0 0 12px;font-size:1.05rem;}
+  .line{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--line);font-size:1.02rem;}
+  .line:last-child{border-bottom:none;}
+  .line .k{color:var(--muted);}
+  .line .v{font-weight:700;font-variant-numeric:tabular-nums;}
+  .bigline{display:flex;justify-content:space-between;align-items:center;padding-top:12px;margin-top:6px;border-top:2px solid var(--cocoa);}
+  .bigline .k{font-weight:700;font-size:1.05rem;}
+  .bigline .v{font-weight:800;font-size:1.4rem;font-variant-numeric:tabular-nums;}
+  .pos{color:var(--green);} .neg{color:var(--rust);}
+  .chart svg{width:100%;height:auto;display:block;}
+  .legend{display:flex;gap:16px;font-size:.82rem;color:var(--muted);margin-top:8px;justify-content:center;}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px;}
+
+  /* Lista registros / editar */
+  .rec{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:10px;}
+  .rec .tag{width:6px;align-self:stretch;border-radius:4px;flex:0 0 auto;}
+  .rec .tag.ing{background:var(--gold);} .rec .tag.egr{background:var(--rust);}
+  .rec .info{flex:1;min-width:0;}
+  .rec .info .t{font-weight:700;}
+  .rec .info .d{font-size:.85rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .rec .amt{font-weight:800;font-variant-numeric:tabular-nums;}
+  .rec .cam{font-size:1.1rem;opacity:.5;}
+  .rec .cam.on{opacity:1;}
+
+  .empty{text-align:center;color:var(--muted);padding:40px 20px;}
+  .empty .big{font-size:2.4rem;margin-bottom:10px;}
+
+  /* Config */
+  .hint{font-size:.85rem;color:var(--muted);margin-top:7px;line-height:1.4;}
+  .pill-ok{display:inline-block;background:var(--green-soft);color:var(--green-dark);border-radius:999px;padding:3px 11px;font-size:.8rem;font-weight:600;}
+
+  /* Toast */
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--cocoa);color:#fff;padding:13px 18px;border-radius:12px;font-weight:600;display:flex;align-items:center;gap:14px;opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:90%;box-shadow:0 6px 20px rgba(0,0,0,.2);}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+  #toast button{background:var(--gold);color:#3a2a08;border:none;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;}
+
+  .btn-outline{width:100%;min-height:var(--tap);border:1.5px solid var(--line);background:var(--surface);border-radius:var(--radius-sm);font-size:1rem;font-weight:600;color:var(--cocoa);cursor:pointer;margin-bottom:11px;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .btn-outline:active{background:var(--green-soft);}
+  .danger-link{color:var(--rust);background:none;border:none;font-weight:600;cursor:pointer;font-size:.95rem;padding:8px;}
+  .linkbtn{background:none;border:none;color:var(--green);font-weight:600;cursor:pointer;font-size:.9rem;padding:8px 2px;margin-top:2px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <svg class="logo" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M20 4C12 8 9 15 11 23c1.6 6.4 6 10 9 12 3-2 7.4-5.6 9-12 2-8-1-15-9-19Z" fill="#D99A1C" stroke="#fff" stroke-width="1.5"/>
+      <path d="M20 7v26" stroke="#fff" stroke-width="1.4" opacity=".7"/>
+      <path d="M20 33c-4-3-8-8-8-14" stroke="#fff" stroke-width="1.2" opacity=".5"/>
+    </svg>
+    <h1>Finca La Esperanza</h1>
+    <button class="gear" onclick="show('config')" aria-label="Ajustes">⚙️</button>
+  </header>
+  <div class="syncbar" id="syncbar"><span class="dot"></span><span id="synctext">Todo guardado</span></div>
+
+  <main id="view"></main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   Finca La Esperanza — app offline-first (prototipo, sin backend aún)
+   Guarda todo localmente. Cuando configures el Apps Script (Ajustes),
+   los registros pendientes suben solos al recuperar señal.
+   ============================================================ */
+
+const $ = s => document.querySelector(s);
+const view = $('#view');
+
+/* ---------- Estado por defecto (se guarda y crece con el uso) ---------- */
+const DEFAULTS = {
+  trabajadores: ['Washington'],
+  tareas: [
+    {n:'Jornal',p:15}, {n:'Guadaña/Chapear',p:30}, {n:'Rodeo de vacas',p:5},
+    {n:'Chequeo vacas',p:5}, {n:'Machete bosque',p:30},
+    {n:'Cosecha de cacao',p:15}, {n:'Cosecha de verde',p:15}, {n:'Construcción cerca',p:15}
+  ],
+  productos: [
+    {n:'Cacao en libras', u:'libras'},
+    {n:'Cacao verde en cajas', u:'cajas'},
+    {n:'Leche', u:'litros'}
+  ],
+  gastos: ['Alambre','Combustible','Herramientas','Medicina animales'],
+  ultimoPrecio: {},
+  appsUrl: '',
+  token: ''
+};
+let META = null; // se carga de la base
+
+/* =======================  ALMACENAMIENTO  ======================= */
+/* IndexedDB con respaldo en memoria (para la vista previa del chat). */
+let db = null, mem = {registros:new Map(), fotos:new Map(), meta:new Map()}, useMem = false;
+
+function openDB(){
+  return new Promise((res)=>{
+    let done=false; const finish=()=>{ if(!done){ done=true; res(); } };
+    // Seguridad: si el almacenamiento del teléfono no responde (ej. Safari privado,
+    // navegador dentro de otra app), no esperamos: seguimos con memoria.
+    const t=setTimeout(()=>{ useMem=true; finish(); }, 1500);
+    try{
+      if(!('indexedDB' in window) || !window.indexedDB){ useMem=true; clearTimeout(t); return finish(); }
+      const rq = indexedDB.open('finca-esperanza', 1);
+      rq.onupgradeneeded = e => {
+        const d = e.target.result;
+        if(!d.objectStoreNames.contains('registros')) d.createObjectStore('registros',{keyPath:'id'});
+        if(!d.objectStoreNames.contains('fotos')) d.createObjectStore('fotos',{keyPath:'id'});
+        if(!d.objectStoreNames.contains('meta')) d.createObjectStore('meta',{keyPath:'k'});
+      };
+      rq.onsuccess = e => { db = e.target.result; clearTimeout(t); finish(); };
+      rq.onerror = () => { useMem = true; clearTimeout(t); finish(); };
+      rq.onblocked = () => { useMem = true; clearTimeout(t); finish(); };
+    }catch(e){ useMem = true; clearTimeout(t); finish(); }
+  });
+}
+function tx(store, mode='readonly'){ return db.transaction(store,mode).objectStore(store); }
+function put(store,val){
+  if(useMem){ mem[store].set(val.id||val.k, val); return Promise.resolve(); }
+  return new Promise((res,rej)=>{ const r=tx(store,'readwrite').put(val); r.onsuccess=res; r.onerror=()=>rej(r.error); });
+}
+function del(store,id){
+  if(useMem){ mem[store].delete(id); return Promise.resolve(); }
+  return new Promise((res,rej)=>{ const r=tx(store,'readwrite').delete(id); r.onsuccess=res; r.onerror=()=>rej(r.error); });
+}
+function get(store,id){
+  if(useMem){ return Promise.resolve(mem[store].get(id)); }
+  return new Promise((res,rej)=>{ const r=tx(store).get(id); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
+}
+function all(store){
+  if(useMem){ return Promise.resolve([...mem[store].values()]); }
+  return new Promise((res,rej)=>{ const r=tx(store).getAll(); r.onsuccess=()=>res(r.result||[]); r.onerror=()=>rej(r.error); });
+}
+async function loadMeta(){
+  const saved = await get('meta','config');
+  META = Object.assign({}, DEFAULTS, saved ? saved.v : {});
+  META.ultimoPrecio = Object.assign({}, DEFAULTS.ultimoPrecio, (saved&&saved.v.ultimoPrecio)||{});
+}
+async function saveMeta(){ await put('meta',{k:'config', v:META}); }
+
+/* =======================  UTILIDADES  ======================= */
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MESES_AB = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+function hoyISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function money(n){ return '$'+ (Math.round(n*100)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function nuevoId(){ const d=new Date(); const p=x=>String(x).padStart(2,'0');
+  return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}-${Math.random().toString(36).slice(2,4)}`; }
+function parseFecha(iso){ const [y,m,d]=iso.split('-').map(Number); return new Date(y,m-1,d); }
+function semanaDe(iso){
+  const d=parseFecha(iso); const day=(d.getDay()+6)%7; // lunes=0
+  const lun=new Date(d); lun.setDate(d.getDate()-day);
+  const dom=new Date(lun); dom.setDate(lun.getDate()+6);
+  const a=`${lun.getDate()} ${MESES_AB[lun.getMonth()]}`;
+  const b=`${dom.getDate()} ${MESES_AB[dom.getMonth()]}`;
+  return `${a} - ${b} ${dom.getFullYear()}`;
+}
+function mismaSemana(iso, refISO){ return semanaDe(iso)===semanaDe(refISO); }
+
+/* =======================  FOTO  ======================= */
+function comprimir(file, maxDim=1280, q=0.68){
+  return new Promise((res,rej)=>{
+    const img=new Image(); const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      let {width:w,height:h}=img;
+      if(w>=h && w>maxDim){ h=Math.round(h*maxDim/w); w=maxDim; }
+      else if(h>maxDim){ w=Math.round(w*maxDim/h); h=maxDim; }
+      const c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      c.toBlob(b=>{ URL.revokeObjectURL(url); res(b); },'image/jpeg',q);
+    };
+    img.onerror=e=>{ URL.revokeObjectURL(url); rej(e); };
+    img.src=url;
+  });
+}
+function blobURL(b){ return b?URL.createObjectURL(b):''; }
+
+/* =======================  SINCRONIZACIÓN  ======================= */
+function online(){ return navigator.onLine; }
+async function pendientes(){ return (await all('registros')).filter(r=>r.sync!=='ok'); }
+
+async function actualizarSync(){
+  const bar=$('#syncbar'), txt=$('#synctext');
+  const pend = await pendientes();
+  bar.className='syncbar';
+  if(!online()){ bar.classList.add('off'); txt.textContent = pend.length ? `Sin señal · ${pend.length} por subir` : 'Sin señal'; return; }
+  if(pend.length){
+    bar.classList.add('pend');
+    txt.textContent = META.appsUrl ? `${pend.length} por subir` : `${pend.length} guardados (falta conectar Google)`;
+  } else { txt.textContent = 'Todo guardado'; }
+}
+async function sincronizar(manual){
+  if(!META.appsUrl || !online()){ actualizarSync(); return; }
+  const pend = await pendientes();
+  for(const r of pend){
+    try{
+      let fotoB64=null;
+      if(r.fotoId){ const f=await get('fotos',r.fotoId); if(f&&f.blob) fotoB64=await blob2b64(f.blob); }
+      const resp = await fetch(META.appsUrl,{
+        method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ token:META.token, registro:limpiar(r), foto:fotoB64 })
+      });
+      const data = await resp.json();
+      if(data && data.ok){ r.sync='ok'; if(data.comprobanteUrl) r.comprobanteUrl=data.comprobanteUrl; await put('registros',r); }
+    }catch(e){ /* se reintenta luego */ break; }
+  }
+  actualizarSync();
+  if(manual) toast('Sincronización intentada');
+}
+function limpiar(r){ const {fotoId, ...rest}=r; return rest; }
+function blob2b64(b){ return new Promise(res=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(b); }); }
+
+/* =======================  TOAST + DESHACER  ======================= */
+let toastTimer=null;
+function toast(msg, undoFn){
+  const t=$('#toast'); t.innerHTML='';
+  t.appendChild(document.createTextNode(msg));
+  if(undoFn){ const b=document.createElement('button'); b.textContent='Deshacer'; b.onclick=()=>{ undoFn(); t.classList.remove('show'); }; t.appendChild(b); }
+  t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'), undoFn?5000:2200);
+}
+
+/* =======================  ROUTER  ======================= */
+const screens = {};
+function show(name, arg){
+  view.innerHTML='';
+  const el = screens[name] ? screens[name](arg) : screens.home();
+  view.appendChild(el);
+  try{ window.scrollTo(0,0); }catch(e){}
+}
+
+/* ----- helper para crear elementos desde HTML ----- */
+function h(html){ const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstElementChild; }
+
+/* =======================  PANTALLA: HOME  ======================= */
+screens.home = () => {
+  const el=h(`<section class="screen active">
+    <button class="home-btn trab" data-go="trabajador"><span class="ico">👷</span><span>Trabajador<span class="sub">Jornal, guadaña, rodeo</span></span></button>
+    <button class="home-btn venta" data-go="venta"><span class="ico">💰</span><span>Venta<span class="sub">Cacao, verde, leche</span></span></button>
+    <button class="home-btn gasto" data-go="gasto"><span class="ico">🧾</span><span>Gasto<span class="sub">Alambre, combustible…</span></span></button>
+    <div class="home-secondary">
+      <button data-go="analisis">📊 Análisis</button>
+      <button data-go="reportes">📄 Reportes</button>
+    </div>
+    <div class="home-secondary" style="margin-top:12px;">
+      <button data-go="editar">✏️ Ver / corregir registros</button>
+    </div>
+  </section>`);
+  el.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>show(b.dataset.go));
+  return el;
+};
+
+/* =======================  chips reutilizables  ======================= */
+function chipGroup(items, value, onPick, {gold=false, addLabel='+ Otro', onAdd=null}={}){
+  const wrap=h(`<div class="chips"></div>`);
+  items.forEach(it=>{
+    const c=h(`<button type="button" class="chip${gold?' gold':''}">${it}</button>`);
+    if(it===value) c.classList.add('sel');
+    c.onclick=()=>{ wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('sel')); c.classList.add('sel'); onPick(it); };
+    wrap.appendChild(c);
+  });
+  if(onAdd){
+    const a=h(`<button type="button" class="chip add">${addLabel}</button>`);
+    a.onclick=()=>{ const v=prompt('Escribe el nombre:'); if(v&&v.trim()){ onAdd(v.trim()); } };
+    wrap.appendChild(a);
+  }
+  return wrap;
+}
+
+/* =======================  PANTALLA: TRABAJADOR  ======================= */
+screens.trabajador = () => {
+  const st={ nombre:META.trabajadores[0], sel:new Set(), dias:1, fecha:hoyISO() };
+  const el=h(`<section class="screen active">
+    <div class="backrow"><button class="back" data-back>‹ Inicio</button></div>
+    <h2 style="margin-bottom:18px;">👷 Registrar trabajador</h2>
+    <div class="field"><label>Trabajador</label><div id="who"></div></div>
+    <div class="field"><label>Tareas del día <span style="font-weight:400;color:var(--muted)">(marca todas las que hizo)</span></label>
+      <div id="task"></div>
+      <button type="button" class="linkbtn" id="editprices">✎ Editar precios</button>
+      <div id="pricepanel" style="display:none;margin-top:10px;"></div>
+    </div>
+    <div class="field"><label>Fecha</label><input type="date" id="fecha" value="${st.fecha}"></div>
+    <div class="field"><label>Días / veces</label><div class="stepper">
+      <button type="button" id="minus">−</button><input type="number" id="cant" value="1" min="1" inputmode="numeric">
+      <button type="button" id="plus">+</button></div></div>
+    <div class="total-box"><span class="lbl">Pago total</span><span class="val" id="total">$0.00</span></div>
+    <button class="save" id="save">Guardar</button>
+  </section>`);
+  el.querySelector('[data-back]').onclick=()=>show('home');
+
+  const sumSel=()=>{ let s=0; st.sel.forEach(n=>{ const t=META.tareas.find(x=>x.n===n); if(t)s+=(+t.p||0); }); return s; };
+  const paint=()=>{ el.querySelector('#total').textContent=money(sumSel()*(st.dias||0)); };
+
+  // Trabajador (una sola selección)
+  function refreshWho(){ const c=el.querySelector('#who'); c.innerHTML='';
+    c.appendChild(chipGroup(META.trabajadores, st.nombre, v=>st.nombre=v, {onAdd:v=>{ if(!META.trabajadores.includes(v)){META.trabajadores.push(v); saveMeta();} st.nombre=v; refreshWho(); }})); }
+  refreshWho();
+
+  // Tareas (se pueden marcar varias)
+  function refreshTasks(){
+    const c=el.querySelector('#task'); c.innerHTML='';
+    const wrap=h('<div class="chips"></div>');
+    META.tareas.forEach(t=>{
+      const chip=h(`<button type="button" class="chip gold">${t.n} <span style="opacity:.7;font-weight:500">$${t.p}</span></button>`);
+      if(st.sel.has(t.n)) chip.classList.add('sel');
+      chip.onclick=()=>{ if(st.sel.has(t.n)) st.sel.delete(t.n); else st.sel.add(t.n); chip.classList.toggle('sel'); paint(); };
+      wrap.appendChild(chip);
+    });
+    const add=h('<button type="button" class="chip add">+ Otra tarea</button>');
+    add.onclick=()=>{ const n=prompt('Nombre de la nueva tarea:'); if(!n||!n.trim())return;
+      const p=prompt('¿Cuánto se paga por esta tarea? ($)','15');
+      META.tareas.push({n:n.trim(), p:+p||0}); saveMeta(); st.sel.add(n.trim()); refreshTasks(); paint(); };
+    wrap.appendChild(add);
+    c.appendChild(wrap);
+  }
+  refreshTasks();
+
+  // Editar precios en línea (sin salir de la pantalla, sin perder lo marcado)
+  const panel=el.querySelector('#pricepanel');
+  function renderPanel(){
+    panel.innerHTML='';
+    META.tareas.forEach((t,i)=>{
+      const row=h(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="flex:1">${t.n}</span><span>$</span>
+        <input type="number" inputmode="decimal" value="${t.p}" data-i="${i}" style="width:90px;min-height:44px;text-align:center;font-size:1rem">
+        <button type="button" data-del="${i}" class="danger-link" style="padding:6px 8px">✕</button></div>`);
+      panel.appendChild(row);
+    });
+    const savep=h('<button type="button" class="btn-outline" style="margin-top:6px">Guardar precios</button>');
+    savep.onclick=()=>{ panel.querySelectorAll('input[data-i]').forEach(inp=>{ META.tareas[+inp.dataset.i].p=+inp.value||0; });
+      saveMeta(); panel.style.display='none'; refreshTasks(); paint(); toast('Precios actualizados'); };
+    panel.appendChild(savep);
+    panel.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+      const i=+b.dataset.del, name=META.tareas[i].n;
+      if(!confirm(`¿Quitar la tarea "${name}"?`))return;
+      META.tareas.splice(i,1); st.sel.delete(name); saveMeta(); refreshTasks(); renderPanel(); paint(); });
+  }
+  el.querySelector('#editprices').onclick=()=>{
+    if(panel.style.display==='block'){ panel.style.display='none'; return; }
+    panel.style.display='block'; renderPanel();
+  };
+
+  const cant=el.querySelector('#cant');
+  el.querySelector('#minus').onclick=()=>{ st.dias=Math.max(1,(+cant.value||1)-1); cant.value=st.dias; paint(); };
+  el.querySelector('#plus').onclick=()=>{ st.dias=(+cant.value||0)+1; cant.value=st.dias; paint(); };
+  cant.oninput=()=>{ st.dias=+cant.value||0; paint(); };
+  el.querySelector('#fecha').onchange=e=>st.fecha=e.target.value;
+  paint();
+
+  el.querySelector('#save').onclick=async()=>{
+    if(st.sel.size===0){ toast('Marca al menos una tarea'); return; }
+    const tareas=[...st.sel], porDia=sumSel();
+    const reg={ id:nuevoId(), fecha:st.fecha, tipo:'Trabajador', nombreDesc:st.nombre,
+      detalle:tareas.join(', '), cantidad:st.dias, unidad:'días', precio:porDia,
+      total:porDia*st.dias, categoria:'Egreso', notas:tareas.join(', '), semana:semanaDe(st.fecha),
+      fotoId:null, comprobanteUrl:'', sync:'pend', creado:Date.now() };
+    await guardar(reg, `Guardado: ${st.nombre}`);
+  };
+  return el;
+};
+
+/* =======================  PANTALLA: VENTA  ======================= */
+screens.venta = () => {
+  const prod0=META.productos[0];
+  const st={ producto:prod0, cantidad:1, precio:META.ultimoPrecio[prod0.n]||'', fecha:hoyISO(), fotoBlob:null };
+  const el=h(`<section class="screen active">
+    <div class="backrow"><button class="back" data-back>‹ Inicio</button></div>
+    <h2 style="margin-bottom:18px;">💰 Registrar venta</h2>
+    <div class="field"><label>Producto</label><div id="prod"></div></div>
+    <div class="field"><label>Fecha</label><input type="date" id="fecha" value="${st.fecha}"></div>
+    <div class="row2">
+      <div class="field"><label>Cantidad (<span id="unidad">${prod0.u}</span>)</label>
+        <div class="stepper"><button type="button" id="minus">−</button><input type="number" id="cant" value="1" min="0" inputmode="decimal"><button type="button" id="plus">+</button></div></div>
+      <div class="field"><label>Precio por unidad</label><input type="number" id="precio" inputmode="decimal" placeholder="0.00" value="${st.precio}"></div>
+    </div>
+    <div class="total-box"><span class="lbl">Total de la venta</span><span class="val" id="total">$0.00</span></div>
+    <div class="field"><label>Comprobante (opcional)</label>
+      <button type="button" class="foto-btn" id="fotobtn">📷 Agregar foto del recibo</button>
+      <input type="file" id="fotoinput" accept="image/*" capture="environment" hidden>
+      <div class="foto-preview" id="fprev"><img id="fimg" alt="comprobante"><button type="button" class="x" id="fx">✕</button></div>
+      <div class="foto-note">Puedes guardar sin foto y agregarla después. Se comprime y sube sola cuando haya señal.</div>
+    </div>
+    <button class="save gold" id="save">Guardar venta</button>
+  </section>`);
+  el.querySelector('[data-back]').onclick=()=>show('home');
+
+  const paint=()=>{ el.querySelector('#total').textContent=money((+el.querySelector('#precio').value||0)*(+el.querySelector('#cant').value||0)); };
+
+  function refreshProd(){
+    const c=el.querySelector('#prod'); c.innerHTML='';
+    c.appendChild(chipGroup(META.productos.map(p=>p.n), st.producto.n, name=>{
+      st.producto=META.productos.find(p=>p.n===name);
+      el.querySelector('#unidad').textContent=st.producto.u;
+      const lp=META.ultimoPrecio[st.producto.n]; el.querySelector('#precio').value=lp||''; paint();
+    }, {gold:true, onAdd:v=>{ if(!META.productos.find(p=>p.n===v)){META.productos.push({n:v,u:'unidades'}); saveMeta();} refreshProd(); }}));
+  }
+  refreshProd();
+
+  const cant=el.querySelector('#cant'), precio=el.querySelector('#precio');
+  el.querySelector('#minus').onclick=()=>{ cant.value=Math.max(0,(+cant.value||0)-1); paint(); };
+  el.querySelector('#plus').onclick=()=>{ cant.value=(+cant.value||0)+1; paint(); };
+  cant.oninput=paint; precio.oninput=paint;
+  el.querySelector('#fecha').onchange=e=>st.fecha=e.target.value;
+
+  // Foto
+  const finput=el.querySelector('#fotoinput');
+  el.querySelector('#fotobtn').onclick=()=>finput.click();
+  finput.onchange=async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    try{ st.fotoBlob=await comprimir(f); }catch{ st.fotoBlob=f; }
+    el.querySelector('#fimg').src=blobURL(st.fotoBlob);
+    el.querySelector('#fprev').style.display='block';
+    el.querySelector('#fotobtn').textContent='📷 Cambiar foto';
+  };
+  el.querySelector('#fx').onclick=()=>{ st.fotoBlob=null; finput.value=''; el.querySelector('#fprev').style.display='none'; el.querySelector('#fotobtn').textContent='📷 Agregar foto del recibo'; };
+
+  el.querySelector('#save').onclick=async()=>{
+    const c=+cant.value||0, p=+precio.value||0;
+    if(c<=0){ toast('Falta la cantidad'); return; }
+    let fotoId=null;
+    if(st.fotoBlob){ fotoId=nuevoId(); await put('fotos',{id:fotoId, blob:st.fotoBlob}); }
+    META.ultimoPrecio[st.producto.n]=p; await saveMeta();
+    const reg={ id:nuevoId(), fecha:st.fecha, tipo: st.producto.n.toLowerCase().includes('leche')?'Venta-Leche':'Venta-Cacao',
+      nombreDesc:st.producto.n, detalle:`${c} ${st.producto.u}`, cantidad:c, unidad:st.producto.u, precio:p,
+      total:p*c, categoria:'Ingreso', notas:'', semana:semanaDe(st.fecha), fotoId, comprobanteUrl:'', sync:'pend', creado:Date.now() };
+    await guardar(reg, `Venta guardada: ${money(p*c)}`);
+  };
+  return el;
+};
+
+/* =======================  PANTALLA: GASTO  ======================= */
+screens.gasto = () => {
+  const st={ tipo:META.gastos[0], detalle:'', costo:'', fecha:hoyISO(), fotoBlob:null };
+  const el=h(`<section class="screen active">
+    <div class="backrow"><button class="back" data-back>‹ Inicio</button></div>
+    <h2 style="margin-bottom:18px;">🧾 Registrar gasto</h2>
+    <div class="field"><label>Tipo de gasto</label><div id="tipo"></div></div>
+    <div class="field"><label>Detalle</label><input type="text" id="detalle" placeholder="Ej: 1 rollo de alambre de 50 m"></div>
+    <div class="field"><label>Fecha</label><input type="date" id="fecha" value="${st.fecha}"></div>
+    <div class="field"><label>Costo total</label><input type="number" id="costo" inputmode="decimal" placeholder="0.00"></div>
+    <div class="field"><label>Comprobante (opcional)</label>
+      <button type="button" class="foto-btn" id="fotobtn">📷 Agregar foto del recibo</button>
+      <input type="file" id="fotoinput" accept="image/*" capture="environment" hidden>
+      <div class="foto-preview" id="fprev"><img id="fimg" alt="comprobante"><button type="button" class="x" id="fx">✕</button></div>
+    </div>
+    <button class="save rust" id="save">Guardar gasto</button>
+  </section>`);
+  el.querySelector('[data-back]').onclick=()=>show('home');
+
+  function refreshTipo(){ const c=el.querySelector('#tipo'); c.innerHTML='';
+    c.appendChild(chipGroup([...META.gastos,'Otro'], st.tipo, v=>st.tipo=v, {
+      onAdd:v=>{ if(!META.gastos.includes(v)){META.gastos.push(v); saveMeta();} st.tipo=v; refreshTipo(); }})); }
+  refreshTipo();
+
+  el.querySelector('#detalle').oninput=e=>st.detalle=e.target.value;
+  el.querySelector('#costo').oninput=e=>st.costo=e.target.value;
+  el.querySelector('#fecha').onchange=e=>st.fecha=e.target.value;
+
+  const finput=el.querySelector('#fotoinput');
+  el.querySelector('#fotobtn').onclick=()=>finput.click();
+  finput.onchange=async e=>{ const f=e.target.files[0]; if(!f)return; try{st.fotoBlob=await comprimir(f);}catch{st.fotoBlob=f;}
+    el.querySelector('#fimg').src=blobURL(st.fotoBlob); el.querySelector('#fprev').style.display='block'; el.querySelector('#fotobtn').textContent='📷 Cambiar foto'; };
+  el.querySelector('#fx').onclick=()=>{ st.fotoBlob=null; finput.value=''; el.querySelector('#fprev').style.display='none'; el.querySelector('#fotobtn').textContent='📷 Agregar foto del recibo'; };
+
+  el.querySelector('#save').onclick=async()=>{
+    const costo=+st.costo||0; if(costo<=0){ toast('Falta el costo'); return; }
+    let fotoId=null; if(st.fotoBlob){ fotoId=nuevoId(); await put('fotos',{id:fotoId, blob:st.fotoBlob}); }
+    const reg={ id:nuevoId(), fecha:st.fecha, tipo:'Egreso', nombreDesc:st.tipo, detalle:st.detalle||st.tipo,
+      cantidad:1, unidad:'', precio:costo, total:costo, categoria:'Egreso', notas:'', semana:semanaDe(st.fecha),
+      fotoId, comprobanteUrl:'', sync:'pend', creado:Date.now() };
+    await guardar(reg, `Gasto guardado: ${money(costo)}`);
+  };
+  return el;
+};
+
+/* =======================  GUARDAR (común) + DESHACER  ======================= */
+async function guardar(reg, msg){
+  await put('registros', reg);
+  toast(msg, async()=>{ await del('registros',reg.id); if(reg.fotoId) await del('fotos',reg.fotoId); actualizarSync(); });
+  show('home');
+  actualizarSync();
+  sincronizar();
+}
+
+/* =======================  PANTALLA: ANÁLISIS  ======================= */
+let periodo='semana';
+screens.analisis = () => {
+  const el=h(`<section class="screen active">
+    <div class="backrow"><button class="back" data-back>‹ Inicio</button></div>
+    <h2 style="margin-bottom:16px;">📊 Análisis</h2>
+    <div class="seg">
+      <button data-p="dia" class="${periodo==='dia'?'sel':''}">Hoy</button>
+      <button data-p="semana" class="${periodo==='semana'?'sel':''}">Esta semana</button>
+      <button data-p="todo" class="${periodo==='todo'?'sel':''}">Todo</button>
+    </div>
+    <div id="cont"></div>
+  </section>`);
+  el.querySelector('[data-back]').onclick=()=>show('home');
+  el.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{ periodo=b.dataset.p; show('analisis'); });
+  render(el.querySelector('#cont'));
+  async function render(cont){
+    const regs=await all('registros');
+    const hoy=hoyISO();
+    const filt = regs.filter(r=> periodo==='todo' ? true : periodo==='dia' ? r.fecha===hoy : mismaSemana(r.fecha,hoy));
+    if(!filt.length){ cont.appendChild(h(`<div class="empty"><div class="big">🌱</div>Aún no hay registros en este periodo.<br>Toca “Inicio” y registra tu primer movimiento.</div>`)); return; }
+
+    const ing={}, egr={}; let manoObra=0, totalIng=0, totalEgr=0;
+    filt.forEach(r=>{
+      if(r.categoria==='Ingreso'){ ing[r.nombreDesc]=(ing[r.nombreDesc]||0)+r.total; totalIng+=r.total; }
+      else { totalEgr+=r.total; if(r.tipo==='Trabajador') manoObra+=r.total; else egr[r.nombreDesc]=(egr[r.nombreDesc]||0)+r.total; }
+    });
+    const neta=totalIng-totalEgr;
+
+    // Ingresos
+    const cIng=h(`<div class="card"><h3>Ingresos</h3></div>`);
+    Object.keys(ing).forEach(k=>cIng.appendChild(h(`<div class="line"><span class="k">${k}</span><span class="v">${money(ing[k])}</span></div>`)));
+    cIng.appendChild(h(`<div class="line"><span class="k"><b>Total ingresos</b></span><span class="v">${money(totalIng)}</span></div>`));
+    cont.appendChild(cIng);
+
+    // Egresos
+    const cEgr=h(`<div class="card"><h3>Egresos</h3></div>`);
+    if(manoObra) cEgr.appendChild(h(`<div class="line"><span class="k">Mano de obra <span style="font-size:.8em;color:var(--muted)">(jornales, guadaña, rodeo)</span></span><span class="v">${money(manoObra)}</span></div>`));
+    Object.keys(egr).forEach(k=>cEgr.appendChild(h(`<div class="line"><span class="k">${k}</span><span class="v">${money(egr[k])}</span></div>`)));
+    cEgr.appendChild(h(`<div class="line"><span class="k"><b>Total egresos</b></span><span class="v">${money(totalEgr)}</span></div>`));
+    cont.appendChild(cEgr);
+
+    // Ganancia
+    const cNet=h(`<div class="card"><div class="bigline"><span class="k">Ganancia neta</span><span class="v ${neta>=0?'pos':'neg'}">${money(neta)}</span></div></div>`);
+    cont.appendChild(cNet);
+
+    // Gráfico ingresos vs egresos por día (últimos días con datos)
+    cont.appendChild(graficoBarras(filt));
+    // Tendencia precio cacao
+    const linea=graficoPrecio(regs);
+    if(linea) cont.appendChild(linea);
+  }
+  return el;
+};
+
+function graficoBarras(regs){
+  const byDay={};
+  regs.forEach(r=>{ byDay[r.fecha]=byDay[r.fecha]||{i:0,e:0}; if(r.categoria==='Ingreso')byDay[r.fecha].i+=r.total; else byDay[r.fecha].e+=r.total; });
+  const dias=Object.keys(byDay).sort().slice(-7);
+  const max=Math.max(1,...dias.map(d=>Math.max(byDay[d].i,byDay[d].e)));
+  const W=460,H=180,pad=24,bw=(W-pad*2)/dias.length;
+  let bars='';
+  dias.forEach((d,i)=>{
+    const x=pad+i*bw; const ih=byDay[d].i/max*(H-50); const eh=byDay[d].e/max*(H-50);
+    const w=bw*0.32;
+    bars+=`<rect x="${x+bw/2-w-3}" y="${H-30-ih}" width="${w}" height="${ih}" rx="3" fill="#D99A1C"/>`;
+    bars+=`<rect x="${x+bw/2+3}" y="${H-30-eh}" width="${w}" height="${eh}" rx="3" fill="#A5432A"/>`;
+    const dd=d.split('-'); bars+=`<text x="${x+bw/2}" y="${H-12}" text-anchor="middle" font-size="11" fill="#6E6353">${+dd[2]}/${+dd[1]}</text>`;
+  });
+  const c=h(`<div class="card"><h3>Ingresos vs Egresos por día</h3><div class="chart"><svg viewBox="0 0 ${W} ${H}">${bars}</svg></div>
+    <div class="legend"><span><i style="background:#D99A1C"></i>Ingresos</span><span><i style="background:#A5432A"></i>Egresos</span></div></div>`);
+  return c;
+}
+function graficoPrecio(regs){
+  const ventas=regs.filter(r=>r.tipo==='Venta-Cacao' && r.precio>0).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  if(ventas.length<2) return null;
+  const W=460,H=160,pad=30;
+  const precios=ventas.map(v=>v.precio); const min=Math.min(...precios),max=Math.max(...precios);
+  const rng=(max-min)||1;
+  const pts=ventas.map((v,i)=>{ const x=pad+i*((W-pad*2)/(ventas.length-1)); const y=H-25-((v.precio-min)/rng)*(H-50); return [x,y,v]; });
+  const path=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const dots=pts.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.5" fill="#1F5B37"/>`).join('');
+  const labs=`<text x="${pad}" y="14" font-size="11" fill="#6E6353">${money(max)}</text><text x="${pad}" y="${H-6}" font-size="11" fill="#6E6353">${money(min)}</text>`;
+  return h(`<div class="card"><h3>Precio del cacao (libras) en el tiempo</h3><div class="chart"><svg viewBox="0 0 ${W} ${H}"><path d="${path}" fill="none" stroke="#1F5B37" stroke-width="2.5"/>${dots}${labs}</svg></div></div>`);
+}
+
+/* =======================  PANTALLA: EDITAR / CORREGIR  ======================= */
+screens.editar = () => {
+  const el=h(`<section class="screen active">
+    <div class="backrow"><button class="back" data-back>‹ Inicio</button></div>
+    <h2 style="margin-bottom:16px;">✏️ Registros recientes</h2>
+    <div id="lista"></div>
+  </section>`);
+  el.querySelector('[data-back]').onclick=()=>show('home');
+  (async()=>{
+    const regs=(await all('registros')).sort((a,b)=>b.creado-a.creado).slice(0,40);
+    const lista=el.querySelector('#lista');
+    if(!regs.length){ lista.appendChild(h(`<div class="empty"><div class="big">📋</div>Todavía no hay registros.</div>`)); return; }
+    regs.forEach(r=>{
+      const ing=r.categoria==='Ingreso';
+      const cam = r.fotoId||r.comprobanteUrl ? '📎' : '';
+      const item=h(`<div class="rec"><div class="tag ${ing?'ing':'egr'}"></div>
+        <div class="info"><div class="t">${r.nombreDesc} <span class="cam ${cam?'on':''}">${cam}</span></div>
+        <div class="d">${r.fecha} · ${r.detalle}</div></div>
+        <div class="amt ${ing?'pos':'neg'}">${ing?'+':'−'}${money(r.total)}</div></div>`);
+      item.onclick=()=>abrirRegistro(r);
+      lista.appendChild(item);
+    });
+  })();
+  return el;
+};
+async function abrirRegistro(r){
+  const foto = r.fotoId ? await get('fotos',r.fotoId) : null;
+  const el=h(`<section class="screen active">
+    <div class="backrow"><button class="back" data-back>‹ Volver</button></div>
+    <h2 style="margin-bottom:16px;">Registro</h2>
+    <div class="card">
+      <div class="line"><span class="k">Tipo</span><span class="v">${r.tipo}</span></div>
+      <div class="line"><span class="k">Descripción</span><span class="v">${r.nombreDesc}</span></div>
+      <div class="line"><span class="k">Detalle</span><span class="v">${r.detalle}</span></div>
+      <div class="line"><span class="k">Fecha</span><span class="v">${r.fecha}</span></div>
+      <div class="line"><span class="k">Total</span><span class="v">${money(r.total)}</span></div>
+      <div class="line"><span class="k">Estado</span><span class="v">${r.sync==='ok'?'<span class="pill-ok">Sincronizado</span>':'Pendiente'}</span></div>
+    </div>
+    <div id="fotozone"></div>
+    <button class="btn-outline" id="editcant">✏️ Corregir cantidad / precio</button>
+    <button class="danger-link" id="delete" style="width:100%">🗑 Eliminar registro</button>
+  </section>`);
+  el.querySelector('[data-back]').onclick=()=>show('editar');
+
+  const fz=el.querySelector('#fotozone');
+  if(foto&&foto.blob){ const p=h(`<div class="foto-preview" style="display:block;margin-bottom:14px;"><img src="${blobURL(foto.blob)}" alt="comprobante"></div>`); fz.appendChild(p); }
+  else {
+    const add=h(`<button class="btn-outline" id="addfoto">📷 Agregar comprobante ahora</button><input type="file" accept="image/*" capture="environment" hidden id="lateinput">`);
+    fz.appendChild(add);
+    const inp=el.querySelector('#lateinput');
+    el.querySelector('#addfoto').onclick=()=>inp.click();
+    inp.onchange=async e=>{ const f=e.target.files[0]; if(!f)return; let b; try{b=await comprimir(f);}catch{b=f;}
+      const fid=nuevoId(); await put('fotos',{id:fid,blob:b}); r.fotoId=fid; r.sync='pend'; await put('registros',r);
+      toast('Comprobante agregado'); actualizarSync(); sincronizar(); abrirRegistro(r); };
+  }
+
+  el.querySelector('#editcant').onclick=async()=>{
+    const nc=prompt('Cantidad:', r.cantidad); if(nc===null)return;
+    const np=prompt('Precio por unidad:', r.precio); if(np===null)return;
+    r.cantidad=+nc||r.cantidad; r.precio=+np||r.precio; r.total=r.cantidad*r.precio; r.sync='pend';
+    await put('registros',r); toast('Registro corregido'); actualizarSync(); sincronizar(); abrirRegistro(r);
+  };
+  el.querySelector('#delete').onclick=async()=>{
+    if(!confirm('¿Eliminar este registro?'))return;
+    await del('registros',r.id); if(r.fotoId) await del('fotos',r.fotoId);
+    toast('Registro eliminado'); actualizarSync(); show('editar');
+  };
+  view.innerHTML=''; view.appendChild(el); window.scrollTo(0,0);
+}
+
+/* =======================  PANTALLA: REPORTES  ======================= */
+screens.reportes = () => {
+  const el=h(`<section class="screen active">
+    <div class="backrow"><button class="back" data-back>‹ Inicio</button></div>
+    <h2 style="margin-bottom:16px;">📄 Reportes</h2>
+    <button class="btn-outline" id="csv">⬇️ Descargar tabla (Excel / CSV)</button>
+    <button class="btn-outline" id="print">🖨️ Imprimir / Guardar resumen en PDF</button>
+    <button class="btn-outline" id="sheet">🔗 Abrir Google Sheet</button>
+    <p class="hint">La descarga CSV se abre en Excel o Google Sheets. Para “Guardar en PDF”, en el diálogo de impresión elige <b>Guardar como PDF</b>. El enlace al Google Sheet funciona cuando lo configures en Ajustes.</p>
+  </section>`);
+  el.querySelector('[data-back]').onclick=()=>show('home');
+  el.querySelector('#csv').onclick=exportarCSV;
+  el.querySelector('#print').onclick=()=>window.print();
+  el.querySelector('#sheet').onclick=()=>{ if(META.sheetUrl) window.open(META.sheetUrl,'_blank'); else toast('Configura el enlace en Ajustes'); };
+  return el;
+};
+async function exportarCSV(){
+  const regs=(await all('registros')).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const cols=['id','fecha','tipo','nombreDesc','detalle','cantidad','unidad','precio','total','categoria','notas','semana','comprobanteUrl','sync'];
+  const head=['ID','Fecha','Tipo','Nombre/Desc','Detalle','Cantidad','Unidad','Precio','Total','Categoría','Notas','Semana','Comprobante','Estado'];
+  const esc=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+  const rows=[head.join(',')].concat(regs.map(r=>cols.map(c=>esc(r[c])).join(',')));
+  const blob=new Blob(['\ufeff'+rows.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`Finca_La_Esperanza_${hoyISO()}.csv`; a.click();
+  toast('Tabla descargada');
+}
+
+/* =======================  PANTALLA: AJUSTES / CONFIG  ======================= */
+screens.config = () => {
+  const el=h(`<section class="screen active">
+    <div class="backrow"><button class="back" data-back>‹ Inicio</button></div>
+    <h2 style="margin-bottom:16px;">⚙️ Ajustes</h2>
+    <div class="card">
+      <h3>Conexión con Google (paso 2)</h3>
+      <p class="hint" style="margin-top:0">Mientras esto esté vacío, la app guarda todo en el teléfono. Cuando pegues aquí la dirección del Apps Script y el token, los registros pendientes empezarán a subir solos.</p>
+      <div class="field" style="margin-top:14px"><label>Dirección del Apps Script (URL)</label><input type="text" id="url" placeholder="https://script.google.com/macros/s/…/exec" value="${META.appsUrl||''}"></div>
+      <div class="field"><label>Token secreto</label><input type="text" id="token" placeholder="una-clave-que-tú-inventes" value="${META.token||''}"></div>
+      <div class="field"><label>Enlace al Google Sheet (para Reportes)</label><input type="text" id="sheet" placeholder="https://docs.google.com/spreadsheets/…" value="${META.sheetUrl||''}"></div>
+      <button class="save" id="guardar" style="min-height:52px;font-size:1.05rem">Guardar ajustes</button>
+    </div>
+    <div class="card">
+      <h3>Estado</h3>
+      <div class="line"><span class="k">Guardado local</span><span class="v">${useMem?'⚠️ solo en memoria*':'✓ activo'}</span></div>
+      <div class="line"><span class="k">Registros guardados</span><span class="v" id="ncount">…</span></div>
+      <p class="hint" ${useMem?'':'style="display:none"'}>*Esta vista previa no guarda de forma permanente. En tu teléfono / GitHub Pages sí queda todo guardado.</p>
+    </div>
+  </section>`);
+  el.querySelector('[data-back]').onclick=()=>show('home');
+  all('registros').then(r=>{ const n=el.querySelector('#ncount'); if(n)n.textContent=r.length; });
+  el.querySelector('#guardar').onclick=async()=>{
+    META.appsUrl=el.querySelector('#url').value.trim();
+    META.token=el.querySelector('#token').value.trim();
+    META.sheetUrl=el.querySelector('#sheet').value.trim();
+    await saveMeta(); toast('Ajustes guardados'); actualizarSync(); sincronizar();
+  };
+  return el;
+};
+
+/* =======================  ARRANQUE  ======================= */
+window.addEventListener('online', ()=>sincronizar());
+window.addEventListener('offline', actualizarSync);
+
+(async function init(){
+  try{ await openDB(); }catch(e){ useMem=true; }
+  try{ await loadMeta(); }catch(e){ META=Object.assign({}, DEFAULTS); META.ultimoPrecio={}; }
+  try{ show('home'); }
+  catch(e){ useMem=true; try{ show('home'); }catch(_){ view.innerHTML='<p style="padding:24px;text-align:center;color:#6E6353">No se pudo cargar. Vuelve a abrir la página.</p>'; } }
+  actualizarSync();
+  sincronizar();
+  if('serviceWorker' in navigator){ try{ navigator.serviceWorker.register('sw.js'); }catch(e){} }
+})();
+</script>
+</body>
+</html>
