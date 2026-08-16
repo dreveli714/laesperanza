@@ -3,11 +3,15 @@
    Los datos NO se guardan aquí (eso lo hace IndexedDB en la app);
    esto solo hace que la pantalla cargue estando offline. */
 
-const CACHE = 'finca-esperanza-v1';
+const CACHE = 'finca-esperanza-v3';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './logo.jpg',
+  './logo-badge.jpg',
+  './icon-192.png',
+  './icon-512.png',
   './icon.svg'
 ];
 
@@ -32,7 +36,6 @@ self.addEventListener('fetch', e => {
     caches.match(req).then(cached => {
       if (cached) return cached;
       return fetch(req).then(resp => {
-        // Guarda copia de lo que sea del mismo origen
         if (resp && resp.status === 200 && req.url.startsWith(self.location.origin)) {
           const copy = resp.clone();
           caches.open(CACHE).then(c => c.put(req, copy));
