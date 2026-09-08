@@ -1,22 +1,24 @@
 /* Service Worker — Finca La Esperanza
-   Cachea el "esqueleto" de la app para que abra sin internet.
-   Los datos NO se guardan aquí (eso lo hace IndexedDB en la app);
-   esto solo hace que la pantalla cargue estando offline. */
+   Guarda el "esqueleto" para que la app abra sin internet.
+   Los datos NO se guardan aquí (van al Google Sheet).
+   Solo hace que la pantalla cargue rápido y funcione offline. */
 
-const CACHE = 'finca-esperanza-v3';
+const CACHE = 'finca-esperanza-v7';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './logo.jpg',
-  './logo-badge.jpg',
   './icon-192.png',
   './icon-512.png',
-  './icon.svg'
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(
+    caches.open(CACHE)
+      .then(c => Promise.allSettled(ASSETS.map(a => c.add(a).catch(() => {}))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', e => {
@@ -29,9 +31,26 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const req = e.request;
-  // No interceptar las llamadas al Apps Script (deben ir a la red)
+  // Nunca interceptar llamadas al Apps Script (siempre a la red)
   if (req.url.includes('script.google.com') || req.method !== 'GET') return;
 
+  // La app: primero red, así llegan versiones nuevas rápido
+  const esApp = req.mode === 'navigate' || req.destination === 'document' ||
+                req.url.endsWith('.html') || req.url.endsWith('/');
+  if (esApp) {
+    e.respondWith(
+      fetch(req).then(resp => {
+        if (resp && resp.status === 200) {
+          const copy = resp.clone();
+          caches.open(CACHE).then(c => c.put(req, copy));
+        }
+        return resp;
+      }).catch(() => caches.match(req).then(c => c || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // Imágenes e íconos: primero caché (son fijos, abren rápido)
   e.respondWith(
     caches.match(req).then(cached => {
       if (cached) return cached;
